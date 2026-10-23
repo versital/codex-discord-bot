@@ -1,0 +1,28 @@
+[Unit]
+Description=Codex Discord bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=codexbot
+Group=codexbot
+WorkingDirectory=/var/lib/codexbot
+# Read by systemd as root, so the file can stay root-only (chmod 600).
+EnvironmentFile=/etc/codex-discord-bot.env
+Environment=HOME=/var/lib/codexbot
+Environment=DATA_DIR=/var/lib/codexbot
+Environment=PATH=/usr/local/bin:/usr/bin:/bin
+# The launcher runs the current bot version and switches versions after /admin update.
+ExecStart=/usr/bin/node /opt/codex-discord-bot/launcher.js
+Restart=always
+RestartSec=5
+
+# Hardening
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/var/lib/codexbot
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

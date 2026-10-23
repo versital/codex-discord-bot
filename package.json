@@ -1,0 +1,20 @@
+{
+  "name": "codex-discord-bot",
+  "version": "1.0.0",
+  "description": "Discord bot that answers @mentions using the Codex CLI",
+  "type": "module",
+  "main": "bot.js",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node bot.js",
+    "dev": "node --env-file=.env bot.js"
+  },
+  "dependencies": {
+    "@openai/codex": "^0.163.0",
+    "discord.js": "^14.16.3",
+    "yauzl": "^3.2.0"
+  }
+}

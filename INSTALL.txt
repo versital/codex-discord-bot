@@ -1,0 +1,64 @@
+CODEX DISCORD BOT - QUICK INSTALL
+=================================
+(Full details, commands, settings and troubleshooting are in README.md.)
+
+ALREADY RUNNING THE OLD VERSION?
+  Just run the installer for your system again (step 2A or 2B). It keeps your token, Codex
+  login and settings, and switches the bot to the new self-updating layout. After that, update
+  from Discord with /admin update - no more zips.
+
+STEP 1 - Create the Discord bot (any PC, in a browser)
+  1. Go to https://discord.com/developers/applications -> New Application. Name it "Codex".
+  2. Bot tab: click "Reset Token" and copy the token (keep it secret).
+     On the same page, turn ON "Message Content Intent" and save.
+  3. OAuth2 -> URL Generator: tick scopes "bot" AND "applications.commands", then permissions:
+     View Channels, Send Messages, Send Messages in Threads, Read Message History, Attach Files.
+     Open the generated URL and add the bot to your server.
+     (Already added it before? Open the new URL once more so slash commands work.)
+
+Only run the bot on ONE machine at a time, or every ping gets answered twice.
+
+
+STEP 2A - Rocky Linux
+  1. Get the code (either way):
+       git clone https://github.com/versital/codex-discord-bot.git && cd codex-discord-bot
+     or copy this zip over and:
+       unzip codex-discord-bot.zip -d codex-discord-bot && cd codex-discord-bot
+       sed -i 's/\r$//' install.sh && chmod +x install.sh
+  2. Run the installer:
+       sudo ./install.sh
+     (Add SKIP_FFMPEG=1 before ./install.sh to skip video support / extra repos.)
+  3. First install only - log Codex in as the bot user (pick one):
+       sudo -u codexbot -H codex login --device-auth
+       sudo -u codexbot -H sh -c 'read -rsp "API key: " K; echo; printf %s "$K" | codex login --with-api-key'
+     and add your bot token:
+       sudo nano /etc/codex-discord-bot.env      (set DISCORD_TOKEN=...)
+  4. Start it:
+       sudo systemctl enable --now codex-discord-bot
+       journalctl -u codex-discord-bot -f        (should say "Logged in as Codex#....")
+
+
+STEP 2B - Windows 10 / 11
+  1. Extract this zip (right-click -> Extract All).
+  2. Open PowerShell AS ADMINISTRATOR (Start -> type PowerShell -> Run as administrator).
+  3. Go to the extracted folder and run the installer:
+       cd "C:\path\to\codex-discord-bot"
+       powershell -ExecutionPolicy Bypass -File .\install-windows.ps1
+  4. First install only: log Codex in (1 = ChatGPT device code, 2 = API key),
+     then paste your Discord bot token.
+  5. It runs in the background and starts with Windows.
+       Logs:     Get-Content C:\ProgramData\CodexDiscordBot\bot.log -Tail 50 -Wait
+       Settings: notepad C:\ProgramData\CodexDiscordBot\bot.env
+       Remove:   powershell -ExecutionPolicy Bypass -File .\uninstall-windows.ps1
+
+
+STEP 3 - Use it
+  @Codex what's the difference between TCP and UDP?     (or /ask)
+  /help lists everything: /new, /chats, /model, /effort, /thinking, /personality, /fast ...
+  Attach photos, text/code files, PDFs, zips or videos (audio isn't supported).
+
+
+UPDATING (from now on)
+  In Discord, as the bot's owner:   /admin update
+  It installs the latest version from GitHub, restarts, and DMs you when it's back.
+  /admin rollback goes back to the previous version.
