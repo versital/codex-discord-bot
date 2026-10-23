@@ -30,8 +30,11 @@ if (LOG_FILE) {
   try {
     if (statSync(LOG_FILE).size > 10 * 1024 * 1024) renameSync(LOG_FILE, `${LOG_FILE}.old`);
   } catch {}
+  // Under the launcher, stderr is copied into the log file as well, so send
+  // warnings and errors to stdout to avoid writing every line twice.
+  const toStdout = process.env.BOT_LAUNCHER === '1';
   for (const level of ['log', 'warn', 'error']) {
-    const original = console[level];
+    const original = toStdout ? console.log : console[level];
     console[level] = (...args) => {
       original(...args);
       try {
