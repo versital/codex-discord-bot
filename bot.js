@@ -259,8 +259,8 @@ function settingsFor(userId) {
   const model = u.model || cfg.defaultModel;
   let effort = u.effort || cfg.defaultEffort;
   let effortNote = '';
-  const info = model && modelInfo(model);
-  if (effort && info?.efforts.length && !info.efforts.includes(effort)) {
+  const info = model ? modelInfo(model) : null;
+  if (effort && info?.efforts?.length && !info.efforts.includes(effort)) {
     effortNote = `${info.name} doesn't support ${effort} effort, using ${info.defaultEffort}`;
     effort = info.defaultEffort;
   }
@@ -541,7 +541,7 @@ async function handleRequest(req) {
     if (err instanceof StoppedError) msg = '⏹️ Stopped.';
     else if (err instanceof TimeoutError) msg = 'Codex took too long on that one, sorry. A lower **/effort** or **/fast on** can help.';
     else {
-      console.error(`Request from ${user.id} failed: ${err.message}`);
+      console.error(`Request from ${user.id} failed: ${err.stack || err.message}`);
       msg = 'Something went wrong talking to Codex. Try again, or **/new** to start a fresh chat.';
     }
     await respond.show({ content: msg, components: [] }).catch(() => {});
