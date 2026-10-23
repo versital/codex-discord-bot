@@ -34,8 +34,15 @@ export async function detectTools() {
     ffprobe: ['-version'],
   };
   for (const [name, args] of Object.entries(checks)) {
-    // Some of these exit non-zero for -v; only "not found" means missing.
-    tools[name] = await exec(name, args, { timeout: 10000 }).then(() => true, (e) => e.code !== 'ENOENT');
+    try {
+      await exec(name, args, { timeout: 10000, windowsHide: true });
+      tools[name] = true;
+    } catch (err) {
+      // Some of these exit non-zero for -v, which still means they run.
+      // Not found, or not allowed to run (EPERM/EACCES), means unavailable.
+      tools[name] = typeof err.code === 'number';
+      if (!tools[name] && err.code !== 'ENOENT') console.warn(`Can't run ${name} (${err.code}); treating it as missing`);
+    }
   }
   return tools;
 }
