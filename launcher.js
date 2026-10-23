@@ -82,8 +82,16 @@ function start() {
     cwd: app.dir,
     env: { ...process.env, BOT_LAUNCHER: '1', DATA_DIR },
     // The IPC channel lets the bot notice if the launcher is killed.
-    stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
+    stdio: ['ignore', 'inherit', 'pipe', 'ipc'],
     windowsHide: true,
+  });
+  // Copy stderr into the log too, so crashes that happen before the bot's
+  // own logging starts (or that bypass it) are visible.
+  child.stderr.on('data', (d) => {
+    process.stderr.write(d);
+    if (process.env.LOG_FILE) {
+      try { appendFileSync(process.env.LOG_FILE, String(d).replace(/^(?=.)/gm, 'STDERR ')); } catch {}
+    }
   });
   child.on('exit', (code, signal) => {
     child = null;

@@ -41,6 +41,13 @@ if (LOG_FILE) {
   }
 }
 
+for (const event of ['uncaughtException', 'unhandledRejection']) {
+  process.on(event, (err) => {
+    console.error(`Crashed (${event}): ${err?.stack || err}`);
+    process.exit(1);
+  });
+}
+
 // Extra folders to search for ffmpeg / pdftotext (used by the Windows installer).
 if (process.env.EXTRA_PATH) {
   process.env.PATH = `${process.env.EXTRA_PATH}${path.delimiter}${process.env.PATH}`;
