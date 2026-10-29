@@ -16,6 +16,20 @@ const CODEX_BIN = process.env.CODEX_BIN
   || [path.join(HERE, 'node_modules', '@openai', 'codex', 'bin', 'codex.js')].find(existsSync)
   || 'codex';
 
+// By default Codex may write only inside its working folder (each request's
+// private outbox, whose files get sent to the user) and nowhere else: not the
+// temp folders, and no network. FILE_OUTPUT=false makes it fully read-only.
+const WRITABLE_OUTBOX = process.env.FILE_OUTPUT !== 'false';
+const SANDBOX_ARGS = WRITABLE_OUTBOX
+  ? [
+    '-c', 'sandbox_mode="workspace-write"',
+    '-c', 'sandbox_workspace_write.network_access=false',
+    '-c', 'sandbox_workspace_write.exclude_tmpdir_env_var=true',
+    '-c', 'sandbox_workspace_write.exclude_slash_tmp=true',
+  ]
+  : ['-c', 'sandbox_mode="read-only"'];
+export const canWriteFiles = WRITABLE_OUTBOX;
+
 // Codex features a Discord bot doesn't need; turning them off trims startup.
 const DISABLED_FEATURES = (process.env.CODEX_DISABLE_FEATURES ?? 'apps,plugins,hooks,skill_search')
   .split(',').map((s) => s.trim()).filter(Boolean);
@@ -93,12 +107,12 @@ export function runCodex(o) {
     '--json',
     '--skip-git-repo-check',
     '--output-last-message', o.outFile,
-    '-c', 'sandbox_mode="read-only"',
+    ...SANDBOX_ARGS,
     '-c', 'approval_policy="never"',
     '-c', `model_reasoning_summary=${toml(o.thinking ? 'detailed' : 'none')}`,
   );
   for (const feature of DISABLED_FEATURES) args.push('--disable', feature);
-  if (!o.threadId) args.push('--sandbox', 'read-only', '--color', 'never', '--cd', o.cwd);
+  if (!o.threadId) args.push('--color', 'never', '--cd', o.cwd);
   if (o.model) args.push('--model', o.model);
   if (o.effort) args.push('-c', `model_reasoning_effort=${toml(o.effort)}`);
   if (o.fast) args.push('-c', 'service_tier="priority"');
@@ -185,7 +199,10 @@ export function runCodex(o) {
       if (reason === 'stopped') return reject(new StoppedError());
       if (reason === 'timeout') return reject(new TimeoutError());
       const text = (await readFile(o.outFile, 'utf8').catch(() => '')).trim() || lastMessage.trim();
-      if (!text) {
+      // A turn can finish with no text, e.g. when Codex only generated an
+      // image; the caller decides whether that's an error.
+      const finished = code === 0 && result.usage && !failure;
+      if (!text && !finished) {
         const msg = failure || stderr.trim() || `codex exited with code ${code}`;
         if (o.threadId && !sawThread) return reject(new ResumeError(msg));
         return reject(new Error(msg));

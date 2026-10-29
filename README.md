@@ -117,6 +117,20 @@ Attach files to the message where you ping it, or to the message you reply to.
 
 On Linux, ffmpeg comes from EPEL + RPM Fusion; `SKIP_FFMPEG=1 sudo ./install.sh` skips it.
 
+## Files it sends back
+
+Codex can reply with files, not just text:
+
+- **Images**: "draw a paper boat" uses Codex's image generation (takes 20-40s).
+- **Voice messages**: "send me a voice message saying …". Codex writes the words, and the bot
+  turns them into a WAV with Windows' built-in voices, or espeak-ng on Linux.
+- **Any other file**: "make that a CSV", "save the script as a .py file", and so on.
+
+Each request gets a private, empty outbox folder. It's the only place Codex can write, and
+whatever it saves there is attached to the reply (up to 10 files, 10 MB each). Files containing
+the bot's token are held back. Chats started before this feature still think they're read-only,
+so use `/new` first. Set `FILE_OUTPUT=false` to make Codex fully read-only again.
+
 ## Updating
 
 Run **`/admin update`** in Discord. The bot downloads the latest version from GitHub, installs it
@@ -139,8 +153,8 @@ Linux fallback without Discord:
 
 Anyone who can ping the bot is effectively typing into an AI agent on your PC, so:
 
-- Codex runs with a read-only sandbox, as the unprivileged `codexbot` user. Its commands can't
-  write files or reach the network. On Windows the sandbox also can't read the settings folder
+- Codex runs sandboxed as the unprivileged `codexbot` user. Its commands can only write inside
+  that request's own outbox folder (not even the temp folders), and can't reach the network. On Windows the sandbox also can't read the settings folder
   that holds the token.
 - The Discord token is kept out of Codex's environment and redacted from replies, along with
   anything that looks like an API key. Replies can never ping @everyone, roles or users.
@@ -149,7 +163,7 @@ Anyone who can ping the bot is effectively typing into an AI agent on your PC, s
 - Every request uses your Codex/ChatGPT quota or API credits. To limit who can use it, set
   `ALLOWED_GUILD_IDS` / `ALLOWED_USER_IDS`, or `DAILY_REQUEST_LIMIT`.
 
-Read-only still means Codex can *read* files the `codexbot` user can read. Don't put anything
+Codex can still *read* files the `codexbot` user can read. Don't put anything
 private in `/var/lib/codexbot`. On Windows your own user folder is private by default, but other
 drives (like `D:\`) are often readable by every account.
 

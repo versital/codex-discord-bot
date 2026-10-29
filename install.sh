@@ -45,6 +45,13 @@ if [[ ${SKIP_FFMPEG:-0} != 1 ]] && ! command -v ffmpeg >/dev/null; then
   } || echo "!! ffmpeg install failed; videos won't work (everything else will)" >&2
 fi
 
+# espeak-ng turns Codex's *.say.txt files into voice messages (from EPEL).
+if ! command -v espeak-ng >/dev/null; then
+  echo "==> Installing espeak-ng (voice messages)"
+  { dnf install -y epel-release && dnf install -y espeak-ng; } \
+    || echo "!! espeak-ng install failed; voice messages won't work (everything else will)" >&2
+fi
+
 # The bot runs the Codex bundled in its node_modules; this global copy is
 # just for the `codex login` commands below.
 echo "==> Installing Codex CLI"
