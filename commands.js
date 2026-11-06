@@ -65,6 +65,17 @@ export function buildCommands({ efforts, allowFast, allowDMs }) {
         .addAttachmentOption((o) => o.setName('zip').setDescription('Install this zip instead of the latest GitHub version')))
       .addSubcommand((s) => s.setName('rollback').setDescription('Go back to the previous version'))
       .addSubcommand((s) => s.setName('restart').setDescription('Restart the bot')),
+    // Only the bot's owner can run these (checked in the handler too).
+    new SlashCommandBuilder().setName('owner').setDescription('Bot owner only: manage other people').setContexts(...contexts)
+      .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+      .addSubcommand((s) => s.setName('spanish').setDescription("Turn someone's Spanish mode on or off")
+        .addUserOption((o) => o.setName('user').setDescription('Who').setRequired(true))
+        .addStringOption((o) => o.setName('mode').setDescription('on or off').setRequired(true).addChoices(...choices(['on', 'off']))))
+      .addSubcommand((s) => s.setName('apply-my-settings').setDescription('Copy your model, effort, personality etc. onto someone, or everyone')
+        .addUserOption((o) => o.setName('user').setDescription('Who gets your settings'))
+        .addBooleanOption((o) => o.setName('all').setDescription('Everyone who has used the bot')))
+      .addSubcommand((s) => s.setName('view').setDescription("See someone's settings")
+        .addUserOption((o) => o.setName('user').setDescription('Who').setRequired(true))),
   ];
   if (allowFast) {
     commands.push(cmd('fast', 'Fast mode: about 2x quicker answers, uses more of your quota')

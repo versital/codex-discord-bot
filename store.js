@@ -5,7 +5,9 @@ import path from 'node:path';
 
 const MAX_MESSAGES = 5000;
 
-const empty = () => ({ users: {}, chats: {}, messages: {}, usage: {}, meta: { dead: [] } });
+// `owner` holds per-user switches only the bot owner can change (e.g. Spanish
+// mode). They're kept apart from `users` so /reset and /forget don't clear them.
+const empty = () => ({ users: {}, owner: {}, chats: {}, messages: {}, usage: {}, meta: { dead: [] } });
 
 export class Store {
   constructor(dir) {

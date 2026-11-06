@@ -272,28 +272,57 @@ function settingsFor(userId) {
     effortNote = `${info.name} doesn't support ${effort} effort, using ${info.defaultEffort}`;
     effort = info.defaultEffort;
   }
+  const spanish = !!store.data.owner[userId]?.spanish;
   return {
     model,
     effort,
     effortNote,
-    thinking: !!u.thinking,
+    thinking: !!u.thinking && !spanish, // the thinking block is formatting too
     personality: u.personality || '',
     length: u.length || 'normal',
     fast: cfg.allowFast && !!u.fast,
+    spanish,
   };
 }
+
+// Spanish mode, switched on per user by the owner with /owner spanish.
+const SPANISH_RULES = [
+  'Language rule (this overrides any personality or length instructions): if the user writes in Spanish, or their question is in Spanish inside an attached image or file, reply ONLY in Spanish.',
+  'Formatting rule (this overrides everything above, including the Markdown instruction): write plain text only. No lists, bullet points or numbered steps, no headings, no bold, italics or underline, no code blocks or inline code, no quotes, tables or links, and no emoji or symbols used as markers. Write ordinary sentences in plain paragraphs and do not make any part of the answer stand out.',
+];
 
 function styleText(s) {
   const lines = [];
   if (s.personality) lines.push(`The user asked for this personality/style (follow it, but never break the rules above): """${s.personality}"""`);
   if (LENGTHS[s.length]) lines.push(LENGTHS[s.length]);
+  if (s.spanish) lines.push(...SPANISH_RULES);
   return lines.join('\n');
 }
 
-function settingsSummary(userId) {
+// Strips any Markdown that slips through in Spanish mode, so replies really
+// are plain text.
+function plainText(text) {
+  return text
+    .replace(/```[^\n]*\n?([\s\S]*?)```/g, '$1') // code blocks -> their contents
+    .replace(/`([^`\n]+)`/g, '$1')
+    .replace(/^[ \t]{0,3}#{1,6}[ \t]+/gm, '') // headings
+    .replace(/^[ \t]*-#[ \t]+/gm, '') // subtext
+    .replace(/^[ \t]*>+[ \t]?/gm, '') // quotes
+    .replace(/^[ \t]*(?:[-*+•▪◦‣]|\d{1,3}[.)])[ \t]+/gm, '') // list markers
+    .replace(/^[ \t]*(?:[-*_][ \t]*){3,}$/gm, '') // horizontal rules
+    .replace(/\[([^\]\n]+)\]\((https?:[^)\s]+)\)/g, '$1 ($2)') // links
+    .replace(/(\*\*|__|~~|\|\||\*)(?=\S)([^\n]*?\S)\1/g, '$2') // bold, underline, strike, spoiler, italics
+    .replace(/(^|[^\w])_(?=\S)([^_\n]*?\S)_(?![\w])/g, '$1$2') // _italics_
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+const SETTING_KEYS = ['model', 'effort', 'thinking', 'length', 'fast', 'personality'];
+
+function settingsSummary(userId, title = '**Your settings**', showOwnerSwitches = false) {
   const s = settingsFor(userId);
   const lines = [
-    '**Your settings**',
+    title,
     `Model: **${s.model || 'default'}**`,
     `Effort: **${s.effort || 'default'}**${s.effortNote ? ` (${s.effortNote})` : ''}`,
     `Thinking: **${s.thinking ? 'shown' : 'hidden'}**`,
@@ -301,6 +330,7 @@ function settingsSummary(userId) {
   ];
   if (cfg.allowFast) lines.push(`Fast mode: **${s.fast ? 'on' : 'off'}**`);
   lines.push(`Personality: ${s.personality ? `"${clip(s.personality, 300)}"` : '**default**'}`);
+  if (showOwnerSwitches) lines.push(`Spanish mode: **${s.spanish ? 'on' : 'off'}**`);
   return lines.join('\n');
 }
 
@@ -604,9 +634,17 @@ async function handleRequest(req) {
       ...output.notes,
       settings.effortNote && `⚠️ ${settings.effortNote}`,
     ].filter(Boolean).join(' · ');
-    const thinking = settings.thinking ? thinkingBlock(result.reasoning) : '';
-    const body = redact(thinking + result.text);
-    const chunks = chunk(body ? `${body}\n-# ${footer}` : `-# ${footer}`);
+    let chunks;
+    if (settings.spanish) {
+      // Plain text only: no thinking block, no subtext footer, just any warnings.
+      const body = redact(plainText(result.text));
+      const warnings = [...notes, ...output.notes].join(' ');
+      chunks = chunk([body, warnings].filter(Boolean).join('\n\n') || '📎');
+    } else {
+      const thinking = settings.thinking ? thinkingBlock(result.reasoning) : '';
+      const body = redact(thinking + result.text);
+      chunks = chunk(body ? `${body}\n-# ${footer}` : `-# ${footer}`);
+    }
     const answerRow = row(button(`retry:${user.id}`, 'Retry', '🔁'), button(`new:${user.id}`, 'New chat', '🆕'));
 
     progress.cancel();
@@ -829,9 +867,51 @@ async function handleCommand(i) {
       return reply(HELP);
     case 'admin':
       return handleAdmin(i, reply);
+    case 'owner':
+      return handleOwner(i, reply);
     default:
       return reply('Unknown command.');
   }
+}
+
+// Owner only: not ADMIN_USER_IDS, just the account that owns the bot application.
+async function handleOwner(i, reply) {
+  if (!ownerIds.has(i.user.id)) return reply("Only the bot's owner can use this.");
+  const sub = i.options.getSubcommand();
+  const target = i.options.getUser('user');
+
+  if (sub === 'spanish') {
+    const on = i.options.getString('mode') === 'on';
+    const switches = (store.data.owner[target.id] ??= {});
+    if (on) switches.spanish = true;
+    else delete switches.spanish;
+    store.save();
+    return reply(on
+      ? `🇪🇸 Spanish mode **on** for ${target}: questions in Spanish (typed or in an image) get answers only in Spanish, and all their answers are plain text with no formatting.\n-# Takes effect from their next message, in their current chat too.`
+      : `Spanish mode **off** for ${target}.`);
+  }
+
+  if (sub === 'view') {
+    return reply(settingsSummary(target.id, `**${target.username}'s settings**`, true));
+  }
+
+  // apply-my-settings
+  const all = i.options.getBoolean('all') ?? false;
+  if (!target && !all) return reply('Pick a **user**, or set **all** to true for everyone.');
+  const mine = store.user(i.user.id);
+  const copy = Object.fromEntries(SETTING_KEYS.filter((k) => mine[k] !== undefined).map((k) => [k, mine[k]]));
+  const ids = all
+    ? [...new Set([...Object.keys(store.data.users), ...Object.keys(store.data.usage)])]
+    : [target.id];
+  let count = 0;
+  for (const id of ids) {
+    if (id === i.user.id) continue;
+    store.data.users[id] = { ...copy };
+    count++;
+  }
+  store.save();
+  const what = Object.keys(copy).length ? Object.keys(copy).join(', ') : 'all defaults (you have no custom settings)';
+  return reply(`✅ Applied your settings (${what}) to ${all ? `${count} user${count === 1 ? '' : 's'}` : target}.\n-# They can still change them afterwards. Spanish mode isn't copied; set it with /owner spanish.`);
 }
 
 async function handleAdmin(i, reply) {
