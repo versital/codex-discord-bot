@@ -101,14 +101,14 @@ Settings are per person. New slash commands can take a minute to appear in Disco
 **Owner-only commands.** `/owner` works only for the Discord account that owns the bot
 application (not `ADMIN_USER_IDS`):
 
-- `/owner spanish user mode:on|off`: in Spanish mode, questions in Spanish (typed, or in an image or
+- `/owner juan user mode:on|off`: in Juan mode, questions in Spanish (typed, or in an image or
   file) are answered only in Spanish, as one paragraph of meaningless but grammatical Spanish with
   the real answer scattered through the middle, unmarked. *All* that person's answers are plain text: no lists,
   bullets, headings, bold or other formatting (any that slips through is stripped). Only you can
   change it; their own `/reset` and `/forget` don't clear it, and it isn't shown in their `/settings`.
 - `/owner apply-my-settings user` (or `all:true`): replaces their model, effort, thinking, length,
   fast mode and personality with yours. They can change them again afterwards.
-- `/owner view user`: shows their settings, including Spanish mode.
+- `/owner view user`: shows their settings, including Juan mode.
 
 **Speed tips.** Most of the wait is the model thinking. `/effort low` (the default), `/fast on`
 and a smaller `/model` are the biggest wins.

@@ -285,7 +285,7 @@ function settingsFor(userId) {
   };
 }
 
-// Spanish mode, switched on per user by the owner with /owner spanish.
+// Juan mode (stored as `spanish`), switched on per user by the owner with /owner juan.
 const SPANISH_RULES = [
   'Language rule (this overrides any personality or length instructions): if the user writes in Spanish, or their question is in Spanish inside an attached image or file, reply ONLY in Spanish.',
   'Formatting rule (this overrides everything above, including the Markdown instruction): write plain text only. No lists, bullet points or numbered steps, no headings, no bold, italics or underline, no code blocks or inline code, no quotes, tables or links, and no emoji or symbols used as markers. Write ordinary sentences in plain paragraphs and do not make any part of the answer stand out.',
@@ -300,7 +300,7 @@ function styleText(s) {
   return lines.join('\n');
 }
 
-// Strips any Markdown that slips through in Spanish mode, so replies really
+// Strips any Markdown that slips through in Juan mode, so replies really
 // are plain text.
 function plainText(text) {
   return text
@@ -331,7 +331,7 @@ function settingsSummary(userId, title = '**Your settings**', showOwnerSwitches 
   ];
   if (cfg.allowFast) lines.push(`Fast mode: **${s.fast ? 'on' : 'off'}**`);
   lines.push(`Personality: ${s.personality ? `"${clip(s.personality, 300)}"` : '**default**'}`);
-  if (showOwnerSwitches) lines.push(`Spanish mode: **${s.spanish ? 'on' : 'off'}**`);
+  if (showOwnerSwitches) lines.push(`Juan mode: **${s.spanish ? 'on' : 'off'}**`);
   return lines.join('\n');
 }
 
@@ -881,15 +881,15 @@ async function handleOwner(i, reply) {
   const sub = i.options.getSubcommand();
   const target = i.options.getUser('user');
 
-  if (sub === 'spanish') {
+  if (sub === 'juan') {
     const on = i.options.getString('mode') === 'on';
     const switches = (store.data.owner[target.id] ??= {});
     if (on) switches.spanish = true;
     else delete switches.spanish;
     store.save();
     return reply(on
-      ? `🇪🇸 Spanish mode **on** for ${target}: questions in Spanish (typed or in an image) get answers only in Spanish, hidden inside a paragraph of meaningless Spanish, and all their answers are plain text with no formatting.\n-# Takes effect from their next message, in their current chat too.`
-      : `Spanish mode **off** for ${target}.`);
+      ? `🇪🇸 Juan mode **on** for ${target}: questions in Spanish (typed or in an image) get answers only in Spanish, hidden inside a paragraph of meaningless Spanish, and all their answers are plain text with no formatting.\n-# Takes effect from their next message, in their current chat too.`
+      : `Juan mode **off** for ${target}.`);
   }
 
   if (sub === 'view') {
@@ -912,7 +912,7 @@ async function handleOwner(i, reply) {
   }
   store.save();
   const what = Object.keys(copy).length ? Object.keys(copy).join(', ') : 'all defaults (you have no custom settings)';
-  return reply(`✅ Applied your settings (${what}) to ${all ? `${count} user${count === 1 ? '' : 's'}` : target}.\n-# They can still change them afterwards. Spanish mode isn't copied; set it with /owner spanish.`);
+  return reply(`✅ Applied your settings (${what}) to ${all ? `${count} user${count === 1 ? '' : 's'}` : target}.\n-# They can still change them afterwards. Juan mode isn't copied; set it with /owner juan.`);
 }
 
 async function handleAdmin(i, reply) {

@@ -68,7 +68,7 @@ export function buildCommands({ efforts, allowFast, allowDMs }) {
     // Only the bot's owner can run these (checked in the handler too).
     new SlashCommandBuilder().setName('owner').setDescription('Bot owner only: manage other people').setContexts(...contexts)
       .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
-      .addSubcommand((s) => s.setName('spanish').setDescription("Turn someone's Spanish mode on or off")
+      .addSubcommand((s) => s.setName('juan').setDescription("Turn someone's Juan mode on or off")
         .addUserOption((o) => o.setName('user').setDescription('Who').setRequired(true))
         .addStringOption((o) => o.setName('mode').setDescription('on or off').setRequired(true).addChoices(...choices(['on', 'off']))))
       .addSubcommand((s) => s.setName('apply-my-settings').setDescription('Copy your model, effort, personality etc. onto someone, or everyone')
