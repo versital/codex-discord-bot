@@ -101,8 +101,8 @@ Settings are per person. New slash commands can take a minute to appear in Disco
 **Owner-only commands.** `/owner` works only for the Discord account that owns the bot
 application (not `ADMIN_USER_IDS`):
 
-- `/owner juan user mode:on|off`: in Juan mode, questions in Spanish (typed, or in an image or
-  file) are answered only in Spanish, as one paragraph of meaningless but grammatical Spanish with
+- `/owner juan user mode:on|off`: in Juan mode, anything involving Spanish (questions in Spanish, typed or in an image or
+  file, plus translations, "how do I say...", word meanings, grammar, homework) is answered only in Spanish, as one paragraph of meaningless but grammatical Spanish with
   the real answer scattered through the middle, unmarked. *All* that person's answers are plain text: no lists,
   bullets, headings, bold or other formatting (any that slips through is stripped). Only you can
   change it; their own `/reset` and `/forget` don't clear it, and it isn't shown in their `/settings`.
