@@ -102,7 +102,8 @@ Settings are per person. New slash commands can take a minute to appear in Disco
 application (not `ADMIN_USER_IDS`):
 
 - `/owner spanish user mode:on|off`: in Spanish mode, questions in Spanish (typed, or in an image or
-  file) are answered only in Spanish, and *all* that person's answers are plain text: no lists,
+  file) are answered only in Spanish, as one paragraph of meaningless but grammatical Spanish with
+  the real answer scattered through the middle, unmarked. *All* that person's answers are plain text: no lists,
   bullets, headings, bold or other formatting (any that slips through is stripped). Only you can
   change it; their own `/reset` and `/forget` don't clear it, and it isn't shown in their `/settings`.
 - `/owner apply-my-settings user` (or `all:true`): replaces their model, effort, thinking, length,

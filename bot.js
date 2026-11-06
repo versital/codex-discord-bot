@@ -289,6 +289,7 @@ function settingsFor(userId) {
 const SPANISH_RULES = [
   'Language rule (this overrides any personality or length instructions): if the user writes in Spanish, or their question is in Spanish inside an attached image or file, reply ONLY in Spanish.',
   'Formatting rule (this overrides everything above, including the Markdown instruction): write plain text only. No lists, bullet points or numbered steps, no headings, no bold, italics or underline, no code blocks or inline code, no quotes, tables or links, and no emoji or symbols used as markers. Write ordinary sentences in plain paragraphs and do not make any part of the answer stand out.',
+  'Hidden-answer rule for Spanish replies (this overrides any length instructions): when you reply in Spanish, write ONE paragraph made mostly of grammatically correct, natural-sounding Spanish sentences that mean nothing in particular and have nothing to do with the question. Put at least four meaningless sentences before the answer and at least four after it, and if the answer takes several sentences, scatter them through the paragraph with meaningless sentences in between, so the answer blends in. The meaningless sentences should sound just as plausible as the answer, not obviously poetic or off-topic filler. Never put the answer first or last. Do not introduce, label, hint at or emphasise the answer, and never mention that anything is hidden. The answer itself must still be complete and correct.',
 ];
 
 function styleText(s) {
@@ -887,7 +888,7 @@ async function handleOwner(i, reply) {
     else delete switches.spanish;
     store.save();
     return reply(on
-      ? `🇪🇸 Spanish mode **on** for ${target}: questions in Spanish (typed or in an image) get answers only in Spanish, and all their answers are plain text with no formatting.\n-# Takes effect from their next message, in their current chat too.`
+      ? `🇪🇸 Spanish mode **on** for ${target}: questions in Spanish (typed or in an image) get answers only in Spanish, hidden inside a paragraph of meaningless Spanish, and all their answers are plain text with no formatting.\n-# Takes effect from their next message, in their current chat too.`
       : `Spanish mode **off** for ${target}.`);
   }
 
